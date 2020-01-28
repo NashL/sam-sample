@@ -1,0 +1,107 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Sample SAM Template for sam-test
+  
+Globals:
+  Function:
+    Runtime: nodejs12.x
+    Environment:
+      Variables:
+        TABLE_NAME: !Ref Table
+    Timeout: 300
+    MemorySize: 128
+
+Resources:
+  Table:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - 
+          AttributeName: "id"
+          AttributeType: "S"
+      KeySchema: 
+        - 
+          AttributeName: "id"
+          KeyType: "HASH"
+      BillingMode: PAY_PER_REQUEST
+  GetTest:
+    Type: AWS::Serverless::Function 
+    Properties:
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref Table
+      Handler: src/main/get.lambdaHandler
+      Runtime: nodejs12.x
+      Events:
+        GetHandler:
+          Type: Api
+          Properties:
+            Path: /counter
+            Method: get
+  PutTest:
+    Type: AWS::Serverless::Function
+    Properties:
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref Table
+      Handler: src/main/put.lambdaHandler
+      Events:
+        GetTest:
+          Type: Api
+          Properties:
+            Path: /counter
+            Method: put
+  DeleteTest:
+    Type: AWS::Serverless::Function
+    Properties:
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref Table
+      Handler: src/main/delete.lambdaHandler
+      Events:
+        DeleteTest:
+          Type: Api
+          Properties:
+            Path: /counter
+            Method: delete
+
+  MyQueue: 
+    Type: AWS::SQS::Queue
+    Properties: 
+      QueueName: "MyQueue"
+  AlarmTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      Subscription:
+      - Protocol: email
+        Endpoint: 'onluza@gmail.com'
+  GetTestAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmActions:
+        - !Ref AlarmTopic
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref GetTest
+      EvaluationPeriods: 1
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Period: 60
+      Statistic: Sum
+      Threshold: '1'
+  DeleteTestAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmActions:
+        - !Ref AlarmTopic
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref DeleteTest
+      EvaluationPeriods: 1
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Period: 60
+      Statistic: Sum
+      Threshold: '1'
