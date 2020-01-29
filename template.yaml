@@ -24,13 +24,13 @@ Resources:
           AttributeName: "id"
           KeyType: "HASH"
       BillingMode: PAY_PER_REQUEST
-  GetTest:
+  GetCounter:
     Type: AWS::Serverless::Function 
     Properties:
       Policies:
         - DynamoDBReadPolicy:
             TableName: !Ref Table
-      Handler: src/main/get.lambdaHandler
+      Handler: src/counter/index.getLambda
       Runtime: nodejs12.x
       Events:
         GetHandler:
@@ -38,26 +38,26 @@ Resources:
           Properties:
             Path: /counter
             Method: get
-  PutTest:
+  PutCounter:
     Type: AWS::Serverless::Function
     Properties:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref Table
-      Handler: src/main/put.lambdaHandler
+      Handler: src/counter/index.putLambda
       Events:
         GetTest:
           Type: Api
           Properties:
             Path: /counter
             Method: put
-  DeleteTest:
+  DeleteCounter:
     Type: AWS::Serverless::Function
     Properties:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref Table
-      Handler: src/main/delete.lambdaHandler
+      Handler: src/counter/index.deleteLambda
       Events:
         DeleteTest:
           Type: Api

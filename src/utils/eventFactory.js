@@ -8,9 +8,9 @@ module.exports = {
   putEvent: () => {
     return ({
       httpMethod: 'PUT',
-      body: { 
-        id: "1",
-        counter: '1' 
+      body: {
+        id: '1',
+        counter: '1'
       }
     })
   }
@@ -19,5 +19,4 @@ module.exports = {
 exports.emptyEvent = {
   httpMethod: 'GET',
   body: {}
-};
-
+}
