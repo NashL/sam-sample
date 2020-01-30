@@ -1,13 +1,13 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: Sample SAM Template for sam-test
-  
 Globals:
   Function:
     Runtime: nodejs12.x
     Environment:
       Variables:
         TABLE_NAME: !Ref Table
+        ACCOUNT_ID: "082889196624"
     Timeout: 300
     MemorySize: 128
 
@@ -64,18 +64,36 @@ Resources:
           Properties:
             Path: /counter
             Method: delete
-
-  MyQueue: 
-    Type: AWS::SQS::Queue
-    Properties: 
-      QueueName: "MyQueue"
+  # GetSqsFunction:
+  #   Type: AWS::Serverless::Function
+  #   Properties:
+  #     Handler: src/sqs/index.getLambda
+  #     Events:
+  #       MySQSEvent:
+  #         Type: SQS
+  #         Properties:
+  #           Queue: !GetAtt GlobalSQS.Arn
+  #           BatchSize: 10
+  PutSqsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Policies:
+        - SQSSendMessagePolicy:
+            QueueName: GlobalSQS
+      Handler: src/sqs/index.putLambda
+      Events:
+        DeleteTest:
+          Type: Api
+          Properties:
+            Path: /sqs
+            Method: put
   AlarmTopic:
     Type: AWS::SNS::Topic
     Properties:
       Subscription:
       - Protocol: email
         Endpoint: 'onluza@gmail.com'
-  GetTestAlarm:
+  GetCounterAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
       AlarmActions:
@@ -83,14 +101,14 @@ Resources:
       ComparisonOperator: GreaterThanOrEqualToThreshold
       Dimensions:
         - Name: FunctionName
-          Value: !Ref GetTest
+          Value: !Ref GetCounter
       EvaluationPeriods: 1
       MetricName: Errors
       Namespace: AWS/Lambda
       Period: 60
       Statistic: Sum
       Threshold: '1'
-  DeleteTestAlarm:
+  DeleteCounterAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
       AlarmActions:
@@ -98,10 +116,25 @@ Resources:
       ComparisonOperator: GreaterThanOrEqualToThreshold
       Dimensions:
         - Name: FunctionName
-          Value: !Ref DeleteTest
+          Value: !Ref DeleteCounter
       EvaluationPeriods: 1
       MetricName: Errors
       Namespace: AWS/Lambda
       Period: 60
       Statistic: Sum
       Threshold: '1'
+  GlobalSQS: 
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: 'GlobalSQS'
+  # myQueuePolicy:
+  #   Type: AWS::SQS::QueuePolicy
+  #   Properties:
+  #     Queues:
+  #       - !Ref GlobalSQS
+  #     PolicyDocument:
+  #       Statement:
+  #         Effect: Allow
+  #         Principal: "*"
+  #         Action: "sqs:*"
+  #         Resource: "*"
